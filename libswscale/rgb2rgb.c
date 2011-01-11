@@ -30,8 +30,6 @@
 #include "swscale.h"
 #include "swscale_internal.h"
 
-#define FAST_BGR2YV12 // use 7-bit instead of 15-bit coefficients
-
 #if ARCH_X86
 DECLARE_ASM_CONST(8, uint64_t, mmx_ff)       = 0x00000000000000FFULL;
 DECLARE_ASM_CONST(8, uint64_t, mmx_null)     = 0x0000000000000000ULL;

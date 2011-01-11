@@ -345,7 +345,7 @@ static inline void rgb16to32_c(const uint8_t *src, uint8_t *dst, long src_size)
 
 static inline void shuffle_bytes_2103_c(const uint8_t *src, uint8_t *dst, long src_size)
 {
-    x86_reg idx = 15 - src_size;
+    int idx = 15 - src_size;
     const uint8_t *s = src-idx;
     uint8_t *d = dst-idx;
     for (; idx<15; idx+=4) {
@@ -372,7 +372,7 @@ static inline void yuvPlanartoyuy2_c(const uint8_t *ysrc, const uint8_t *usrc, c
                                            long lumStride, long chromStride, long dstStride, long vertLumPerChroma)
 {
     long y;
-    const x86_reg chromWidth= width>>1;
+    const int chromWidth= width>>1;
     for (y=0; y<height; y++) {
 #if HAVE_FAST_64BIT
         int i;
@@ -432,7 +432,7 @@ static inline void yuvPlanartouyvy_c(const uint8_t *ysrc, const uint8_t *usrc, c
                                            long lumStride, long chromStride, long dstStride, long vertLumPerChroma)
 {
     long y;
-    const x86_reg chromWidth= width>>1;
+    const int chromWidth= width>>1;
     for (y=0; y<height; y++) {
 #if HAVE_FAST_64BIT
         int i;
@@ -516,7 +516,7 @@ static inline void yuy2toyv12_c(const uint8_t *src, uint8_t *ydst, uint8_t *udst
                                       long lumStride, long chromStride, long srcStride)
 {
     long y;
-    const x86_reg chromWidth= width>>1;
+    const int chromWidth= width>>1;
     for (y=0; y<height; y+=2) {
         long i;
         for (i=0; i<chromWidth; i++) {
@@ -555,7 +555,7 @@ static inline void planar2x_c(const uint8_t *src, uint8_t *dst, long srcWidth, l
     dst+= dstStride;
 
     for (y=1; y<srcHeight; y++) {
-        const x86_reg mmxSize=1;
+        const int mmxSize=1;
 
         dst[0        ]= (3*src[0] +   src[srcStride])>>2;
         dst[dstStride]= (  src[0] + 3*src[srcStride])>>2;
@@ -601,7 +601,7 @@ static inline void uyvytoyv12_c(const uint8_t *src, uint8_t *ydst, uint8_t *udst
                                       long lumStride, long chromStride, long srcStride)
 {
     long y;
-    const x86_reg chromWidth= width>>1;
+    const int chromWidth= width>>1;
     for (y=0; y<height; y+=2) {
         long i;
         for (i=0; i<chromWidth; i++) {
@@ -636,7 +636,7 @@ static inline void rgb24toyv12_c(const uint8_t *src, uint8_t *ydst, uint8_t *uds
                                        long lumStride, long chromStride, long srcStride)
 {
     long y;
-    const x86_reg chromWidth= width>>1;
+    const int chromWidth= width>>1;
     y=0;
     for (; y<height; y+=2) {
         long i;
@@ -710,7 +710,7 @@ static inline void vu9_to_vu12_c(const uint8_t *src1, const uint8_t *src2,
                                        long srcStride1, long srcStride2,
                                        long dstStride1, long dstStride2)
 {
-    x86_reg y;
+    int y;
     long x,w,h;
     w=width/2; h=height/2;
     for (y=0;y<h;y++) {
@@ -733,7 +733,7 @@ static inline void yvu9_to_yuy2_c(const uint8_t *src1, const uint8_t *src2, cons
                                         long srcStride1, long srcStride2,
                                         long srcStride3, long dstStride)
 {
-    x86_reg x;
+    int x;
     long y,w,h;
     w=width/2; h=height;
     for (y=0;y<h;y++) {
@@ -756,7 +756,7 @@ static inline void yvu9_to_yuy2_c(const uint8_t *src1, const uint8_t *src2, cons
     }
 }
 
-static void extract_even_c(const uint8_t *src, uint8_t *dst, x86_reg count)
+static void extract_even_c(const uint8_t *src, uint8_t *dst, int count)
 {
     dst +=   count;
     src += 2*count;
@@ -768,7 +768,7 @@ static void extract_even_c(const uint8_t *src, uint8_t *dst, x86_reg count)
     }
 }
 
-static void extract_even2_c(const uint8_t *src, uint8_t *dst0, uint8_t *dst1, x86_reg count)
+static void extract_even2_c(const uint8_t *src, uint8_t *dst0, uint8_t *dst1, int count)
 {
     dst0+=   count;
     dst1+=   count;
@@ -781,7 +781,7 @@ static void extract_even2_c(const uint8_t *src, uint8_t *dst0, uint8_t *dst1, x8
     }
 }
 
-static void extract_even2avg_c(const uint8_t *src0, const uint8_t *src1, uint8_t *dst0, uint8_t *dst1, x86_reg count)
+static void extract_even2avg_c(const uint8_t *src0, const uint8_t *src1, uint8_t *dst0, uint8_t *dst1, int count)
 {
     dst0 +=   count;
     dst1 +=   count;
@@ -795,7 +795,7 @@ static void extract_even2avg_c(const uint8_t *src0, const uint8_t *src1, uint8_t
     }
 }
 
-static void extract_odd2_c(const uint8_t *src, uint8_t *dst0, uint8_t *dst1, x86_reg count)
+static void extract_odd2_c(const uint8_t *src, uint8_t *dst0, uint8_t *dst1, int count)
 {
     dst0+=   count;
     dst1+=   count;
@@ -809,7 +809,7 @@ static void extract_odd2_c(const uint8_t *src, uint8_t *dst0, uint8_t *dst1, x86
     }
 }
 
-static void extract_odd2avg_c(const uint8_t *src0, const uint8_t *src1, uint8_t *dst0, uint8_t *dst1, x86_reg count)
+static void extract_odd2avg_c(const uint8_t *src0, const uint8_t *src1, uint8_t *dst0, uint8_t *dst1, int count)
 {
     dst0 +=   count;
     dst1 +=   count;

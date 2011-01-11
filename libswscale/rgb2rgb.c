@@ -95,21 +95,21 @@ DECLARE_ASM_CONST(8, uint64_t, blue_15mask)  = 0x0000001f0000001fULL;
 #undef COMPILE_TEMPLATE_MMX
 #define COMPILE_TEMPLATE_MMX 1
 #define RENAME(a) a ## _MMX
-#include "rgb2rgb_template.c"
+#include "x86/rgb2rgb_template.c"
 
 //MMX2 versions
 #undef RENAME
 #undef COMPILE_TEMPLATE_MMX2
 #define COMPILE_TEMPLATE_MMX2 1
 #define RENAME(a) a ## _MMX2
-#include "rgb2rgb_template.c"
+#include "x86/rgb2rgb_template.c"
 
 //SSE2 versions
 #undef RENAME
 #undef COMPILE_TEMPLATE_SSE2
 #define COMPILE_TEMPLATE_SSE2 1
 #define RENAME(a) a ## _SSE2
-#include "rgb2rgb_template.c"
+#include "x86/rgb2rgb_template.c"
 
 //3DNOW versions
 #undef RENAME
@@ -120,7 +120,7 @@ DECLARE_ASM_CONST(8, uint64_t, blue_15mask)  = 0x0000001f0000001fULL;
 #define COMPILE_TEMPLATE_SSE2 1
 #define COMPILE_TEMPLATE_AMD3DNOW 1
 #define RENAME(a) a ## _3DNOW
-#include "rgb2rgb_template.c"
+#include "x86/rgb2rgb_template.c"
 
 #endif //ARCH_X86 || ARCH_X86_64
 
@@ -133,6 +133,7 @@ DECLARE_ASM_CONST(8, uint64_t, blue_15mask)  = 0x0000001f0000001fULL;
 
 void sws_rgb2rgb_init(int flags)
 {
+
 #if HAVE_MMX2 || HAVE_AMD3DNOW || HAVE_MMX
     if (flags & SWS_CPU_CAPS_SSE2)
         rgb2rgb_init_SSE2();

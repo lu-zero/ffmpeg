@@ -81,14 +81,13 @@ DECLARE_ASM_CONST(8, uint64_t, blue_15mask)  = 0x0000001f0000001fULL;
 
 //Note: We have C, MMX, MMX2, 3DNOW versions, there is no 3DNOW + MMX2 one.
 //plain C versions
+#include "rgb2rgb_template.c"
+
+#if ARCH_X86
 #define COMPILE_TEMPLATE_MMX 0
 #define COMPILE_TEMPLATE_MMX2 0
 #define COMPILE_TEMPLATE_AMD3DNOW 0
 #define COMPILE_TEMPLATE_SSE2 0
-#define RENAME(a) a ## _C
-#include "rgb2rgb_template.c"
-
-#if ARCH_X86
 
 //MMX versions
 #undef RENAME
@@ -145,7 +144,7 @@ void sws_rgb2rgb_init(int flags)
         rgb2rgb_init_MMX();
     else
 #endif /* HAVE_MMX2 || HAVE_AMD3DNOW || HAVE_MMX */
-        rgb2rgb_init_C();
+        rgb2rgb_init_c();
 }
 
 #if LIBSWSCALE_VERSION_MAJOR < 1

@@ -26,7 +26,7 @@
 
 #include <stddef.h>
 
-static inline void RENAME(rgb24tobgr32)(const uint8_t *src, uint8_t *dst, long src_size)
+static inline void rgb24tobgr32_c(const uint8_t *src, uint8_t *dst, long src_size)
 {
     uint8_t *dest = dst;
     const uint8_t *s = src;
@@ -50,7 +50,7 @@ static inline void RENAME(rgb24tobgr32)(const uint8_t *src, uint8_t *dst, long s
     }
 }
 
-static inline void RENAME(rgb32tobgr24)(const uint8_t *src, uint8_t *dst, long src_size)
+static inline void rgb32tobgr24_c(const uint8_t *src, uint8_t *dst, long src_size)
 {
     uint8_t *dest = dst;
     const uint8_t *s = src;
@@ -81,7 +81,7 @@ static inline void RENAME(rgb32tobgr24)(const uint8_t *src, uint8_t *dst, long s
  MMX2, 3DNOW optimization by Nick Kurshev
  32-bit C version, and and&add trick by Michael Niedermayer
 */
-static inline void RENAME(rgb15to16)(const uint8_t *src, uint8_t *dst, long src_size)
+static inline void rgb15to16_c(const uint8_t *src, uint8_t *dst, long src_size)
 {
     register const uint8_t* s=src;
     register uint8_t* d=dst;
@@ -101,7 +101,7 @@ static inline void RENAME(rgb15to16)(const uint8_t *src, uint8_t *dst, long src_
     }
 }
 
-static inline void RENAME(rgb16to15)(const uint8_t *src, uint8_t *dst, long src_size)
+static inline void rgb16to15_c(const uint8_t *src, uint8_t *dst, long src_size)
 {
     register const uint8_t* s=src;
     register uint8_t* d=dst;
@@ -122,7 +122,7 @@ static inline void RENAME(rgb16to15)(const uint8_t *src, uint8_t *dst, long src_
     }
 }
 
-static inline void RENAME(rgb32to16)(const uint8_t *src, uint8_t *dst, long src_size)
+static inline void rgb32to16_c(const uint8_t *src, uint8_t *dst, long src_size)
 {
     const uint8_t *s = src;
     const uint8_t *end;
@@ -135,7 +135,7 @@ static inline void RENAME(rgb32to16)(const uint8_t *src, uint8_t *dst, long src_
     }
 }
 
-static inline void RENAME(rgb32tobgr16)(const uint8_t *src, uint8_t *dst, long src_size)
+static inline void rgb32tobgr16_c(const uint8_t *src, uint8_t *dst, long src_size)
 {
     const uint8_t *s = src;
     const uint8_t *end;
@@ -147,7 +147,7 @@ static inline void RENAME(rgb32tobgr16)(const uint8_t *src, uint8_t *dst, long s
     }
 }
 
-static inline void RENAME(rgb32to15)(const uint8_t *src, uint8_t *dst, long src_size)
+static inline void rgb32to15_c(const uint8_t *src, uint8_t *dst, long src_size)
 {
     const uint8_t *s = src;
     const uint8_t *end;
@@ -159,7 +159,7 @@ static inline void RENAME(rgb32to15)(const uint8_t *src, uint8_t *dst, long src_
     }
 }
 
-static inline void RENAME(rgb32tobgr15)(const uint8_t *src, uint8_t *dst, long src_size)
+static inline void rgb32tobgr15_c(const uint8_t *src, uint8_t *dst, long src_size)
 {
     const uint8_t *s = src;
     const uint8_t *end;
@@ -171,7 +171,7 @@ static inline void RENAME(rgb32tobgr15)(const uint8_t *src, uint8_t *dst, long s
     }
 }
 
-static inline void RENAME(rgb24tobgr16)(const uint8_t *src, uint8_t *dst, long src_size)
+static inline void rgb24tobgr16_c(const uint8_t *src, uint8_t *dst, long src_size)
 {
     const uint8_t *s = src;
     const uint8_t *end;
@@ -185,7 +185,7 @@ static inline void RENAME(rgb24tobgr16)(const uint8_t *src, uint8_t *dst, long s
     }
 }
 
-static inline void RENAME(rgb24to16)(const uint8_t *src, uint8_t *dst, long src_size)
+static inline void rgb24to16_c(const uint8_t *src, uint8_t *dst, long src_size)
 {
     const uint8_t *s = src;
     const uint8_t *end;
@@ -199,7 +199,7 @@ static inline void RENAME(rgb24to16)(const uint8_t *src, uint8_t *dst, long src_
     }
 }
 
-static inline void RENAME(rgb24tobgr15)(const uint8_t *src, uint8_t *dst, long src_size)
+static inline void rgb24tobgr15_c(const uint8_t *src, uint8_t *dst, long src_size)
 {
     const uint8_t *s = src;
     const uint8_t *end;
@@ -213,7 +213,7 @@ static inline void RENAME(rgb24tobgr15)(const uint8_t *src, uint8_t *dst, long s
     }
 }
 
-static inline void RENAME(rgb24to15)(const uint8_t *src, uint8_t *dst, long src_size)
+static inline void rgb24to15_c(const uint8_t *src, uint8_t *dst, long src_size)
 {
     const uint8_t *s = src;
     const uint8_t *end;
@@ -248,7 +248,7 @@ static inline void RENAME(rgb24to15)(const uint8_t *src, uint8_t *dst, long src_
        |
    original bits
 */
-static inline void RENAME(rgb15tobgr24)(const uint8_t *src, uint8_t *dst, long src_size)
+static inline void rgb15tobgr24_c(const uint8_t *src, uint8_t *dst, long src_size)
 {
     const uint16_t *end;
     uint8_t *d = dst;
@@ -263,7 +263,7 @@ static inline void RENAME(rgb15tobgr24)(const uint8_t *src, uint8_t *dst, long s
     }
 }
 
-static inline void RENAME(rgb16tobgr24)(const uint8_t *src, uint8_t *dst, long src_size)
+static inline void rgb16tobgr24_c(const uint8_t *src, uint8_t *dst, long src_size)
 {
     const uint16_t *end;
     uint8_t *d = (uint8_t *)dst;
@@ -297,7 +297,7 @@ static inline void RENAME(rgb16tobgr24)(const uint8_t *src, uint8_t *dst, long s
     MOVNTQ"     %%mm0,  %0      \n\t"                               \
     MOVNTQ"     %%mm3, 8%0      \n\t"                               \
 
-static inline void RENAME(rgb15to32)(const uint8_t *src, uint8_t *dst, long src_size)
+static inline void rgb15to32_c(const uint8_t *src, uint8_t *dst, long src_size)
 {
     const uint16_t *end;
     uint8_t *d = dst;
@@ -320,7 +320,7 @@ static inline void RENAME(rgb15to32)(const uint8_t *src, uint8_t *dst, long src_
     }
 }
 
-static inline void RENAME(rgb16to32)(const uint8_t *src, uint8_t *dst, long src_size)
+static inline void rgb16to32_c(const uint8_t *src, uint8_t *dst, long src_size)
 {
     const uint16_t *end;
     uint8_t *d = dst;
@@ -343,7 +343,7 @@ static inline void RENAME(rgb16to32)(const uint8_t *src, uint8_t *dst, long src_
     }
 }
 
-static inline void RENAME(shuffle_bytes_2103)(const uint8_t *src, uint8_t *dst, long src_size)
+static inline void shuffle_bytes_2103_c(const uint8_t *src, uint8_t *dst, long src_size)
 {
     x86_reg idx = 15 - src_size;
     const uint8_t *s = src-idx;
@@ -355,7 +355,7 @@ static inline void RENAME(shuffle_bytes_2103)(const uint8_t *src, uint8_t *dst, 
     }
 }
 
-static inline void RENAME(rgb24tobgr24)(const uint8_t *src, uint8_t *dst, long src_size)
+static inline void rgb24tobgr24_c(const uint8_t *src, uint8_t *dst, long src_size)
 {
     unsigned i;
     for (i=0; i<src_size; i+=3) {
@@ -367,7 +367,7 @@ static inline void RENAME(rgb24tobgr24)(const uint8_t *src, uint8_t *dst, long s
     }
 }
 
-static inline void RENAME(yuvPlanartoyuy2)(const uint8_t *ysrc, const uint8_t *usrc, const uint8_t *vsrc, uint8_t *dst,
+static inline void yuvPlanartoyuy2_c(const uint8_t *ysrc, const uint8_t *usrc, const uint8_t *vsrc, uint8_t *dst,
                                            long width, long height,
                                            long lumStride, long chromStride, long dstStride, long vertLumPerChroma)
 {
@@ -419,15 +419,15 @@ static inline void RENAME(yuvPlanartoyuy2)(const uint8_t *ysrc, const uint8_t *u
  * Height should be a multiple of 2 and width should be a multiple of 16.
  * (If this is a problem for anyone then tell me, and I will fix it.)
  */
-static inline void RENAME(yv12toyuy2)(const uint8_t *ysrc, const uint8_t *usrc, const uint8_t *vsrc, uint8_t *dst,
+static inline void yv12toyuy2_c(const uint8_t *ysrc, const uint8_t *usrc, const uint8_t *vsrc, uint8_t *dst,
                                       long width, long height,
                                       long lumStride, long chromStride, long dstStride)
 {
     //FIXME interpolate chroma
-    RENAME(yuvPlanartoyuy2)(ysrc, usrc, vsrc, dst, width, height, lumStride, chromStride, dstStride, 2);
+    yuvPlanartoyuy2_c(ysrc, usrc, vsrc, dst, width, height, lumStride, chromStride, dstStride, 2);
 }
 
-static inline void RENAME(yuvPlanartouyvy)(const uint8_t *ysrc, const uint8_t *usrc, const uint8_t *vsrc, uint8_t *dst,
+static inline void yuvPlanartouyvy_c(const uint8_t *ysrc, const uint8_t *usrc, const uint8_t *vsrc, uint8_t *dst,
                                            long width, long height,
                                            long lumStride, long chromStride, long dstStride, long vertLumPerChroma)
 {
@@ -479,39 +479,39 @@ static inline void RENAME(yuvPlanartouyvy)(const uint8_t *ysrc, const uint8_t *u
  * Height should be a multiple of 2 and width should be a multiple of 16
  * (If this is a problem for anyone then tell me, and I will fix it.)
  */
-static inline void RENAME(yv12touyvy)(const uint8_t *ysrc, const uint8_t *usrc, const uint8_t *vsrc, uint8_t *dst,
+static inline void yv12touyvy_c(const uint8_t *ysrc, const uint8_t *usrc, const uint8_t *vsrc, uint8_t *dst,
                                       long width, long height,
                                       long lumStride, long chromStride, long dstStride)
 {
     //FIXME interpolate chroma
-    RENAME(yuvPlanartouyvy)(ysrc, usrc, vsrc, dst, width, height, lumStride, chromStride, dstStride, 2);
+    yuvPlanartouyvy_c(ysrc, usrc, vsrc, dst, width, height, lumStride, chromStride, dstStride, 2);
 }
 
 /**
  * Width should be a multiple of 16.
  */
-static inline void RENAME(yuv422ptouyvy)(const uint8_t *ysrc, const uint8_t *usrc, const uint8_t *vsrc, uint8_t *dst,
+static inline void yuv422ptouyvy_c(const uint8_t *ysrc, const uint8_t *usrc, const uint8_t *vsrc, uint8_t *dst,
                                          long width, long height,
                                          long lumStride, long chromStride, long dstStride)
 {
-    RENAME(yuvPlanartouyvy)(ysrc, usrc, vsrc, dst, width, height, lumStride, chromStride, dstStride, 1);
+    yuvPlanartouyvy_c(ysrc, usrc, vsrc, dst, width, height, lumStride, chromStride, dstStride, 1);
 }
 
 /**
  * Width should be a multiple of 16.
  */
-static inline void RENAME(yuv422ptoyuy2)(const uint8_t *ysrc, const uint8_t *usrc, const uint8_t *vsrc, uint8_t *dst,
+static inline void yuv422ptoyuy2_c(const uint8_t *ysrc, const uint8_t *usrc, const uint8_t *vsrc, uint8_t *dst,
                                          long width, long height,
                                          long lumStride, long chromStride, long dstStride)
 {
-    RENAME(yuvPlanartoyuy2)(ysrc, usrc, vsrc, dst, width, height, lumStride, chromStride, dstStride, 1);
+    yuvPlanartoyuy2_c(ysrc, usrc, vsrc, dst, width, height, lumStride, chromStride, dstStride, 1);
 }
 
 /**
  * Height should be a multiple of 2 and width should be a multiple of 16.
  * (If this is a problem for anyone then tell me, and I will fix it.)
  */
-static inline void RENAME(yuy2toyv12)(const uint8_t *src, uint8_t *ydst, uint8_t *udst, uint8_t *vdst,
+static inline void yuy2toyv12_c(const uint8_t *src, uint8_t *ydst, uint8_t *udst, uint8_t *vdst,
                                       long width, long height,
                                       long lumStride, long chromStride, long srcStride)
 {
@@ -539,7 +539,7 @@ static inline void RENAME(yuy2toyv12)(const uint8_t *src, uint8_t *ydst, uint8_t
     }
 }
 
-static inline void RENAME(planar2x)(const uint8_t *src, uint8_t *dst, long srcWidth, long srcHeight, long srcStride, long dstStride)
+static inline void planar2x_c(const uint8_t *src, uint8_t *dst, long srcWidth, long srcHeight, long srcStride, long dstStride)
 {
     long x,y;
 
@@ -596,7 +596,7 @@ static inline void RENAME(planar2x)(const uint8_t *src, uint8_t *dst, long srcWi
  * Chrominance data is only taken from every second line, others are ignored.
  * FIXME: Write HQ version.
  */
-static inline void RENAME(uyvytoyv12)(const uint8_t *src, uint8_t *ydst, uint8_t *udst, uint8_t *vdst,
+static inline void uyvytoyv12_c(const uint8_t *src, uint8_t *ydst, uint8_t *udst, uint8_t *vdst,
                                       long width, long height,
                                       long lumStride, long chromStride, long srcStride)
 {
@@ -631,7 +631,7 @@ static inline void RENAME(uyvytoyv12)(const uint8_t *src, uint8_t *ydst, uint8_t
  * others are ignored in the C version.
  * FIXME: Write HQ version.
  */
-static inline void RENAME(rgb24toyv12)(const uint8_t *src, uint8_t *ydst, uint8_t *udst, uint8_t *vdst,
+static inline void rgb24toyv12_c(const uint8_t *src, uint8_t *ydst, uint8_t *udst, uint8_t *vdst,
                                        long width, long height,
                                        long lumStride, long chromStride, long srcStride)
 {
@@ -686,7 +686,7 @@ static inline void RENAME(rgb24toyv12)(const uint8_t *src, uint8_t *ydst, uint8_
     }
 }
 
-static void RENAME(interleaveBytes)(const uint8_t *src1, const uint8_t *src2, uint8_t *dest,
+static void interleaveBytes_c(const uint8_t *src1, const uint8_t *src2, uint8_t *dest,
                              long width, long height, long src1Stride,
                              long src2Stride, long dstStride)
 {
@@ -704,7 +704,7 @@ static void RENAME(interleaveBytes)(const uint8_t *src1, const uint8_t *src2, ui
     }
 }
 
-static inline void RENAME(vu9_to_vu12)(const uint8_t *src1, const uint8_t *src2,
+static inline void vu9_to_vu12_c(const uint8_t *src1, const uint8_t *src2,
                                        uint8_t *dst1, uint8_t *dst2,
                                        long width, long height,
                                        long srcStride1, long srcStride2,
@@ -727,7 +727,7 @@ static inline void RENAME(vu9_to_vu12)(const uint8_t *src1, const uint8_t *src2,
     }
 }
 
-static inline void RENAME(yvu9_to_yuy2)(const uint8_t *src1, const uint8_t *src2, const uint8_t *src3,
+static inline void yvu9_to_yuy2_c(const uint8_t *src1, const uint8_t *src2, const uint8_t *src3,
                                         uint8_t *dst,
                                         long width, long height,
                                         long srcStride1, long srcStride2,
@@ -756,7 +756,7 @@ static inline void RENAME(yvu9_to_yuy2)(const uint8_t *src1, const uint8_t *src2
     }
 }
 
-static void RENAME(extract_even)(const uint8_t *src, uint8_t *dst, x86_reg count)
+static void extract_even_c(const uint8_t *src, uint8_t *dst, x86_reg count)
 {
     dst +=   count;
     src += 2*count;
@@ -768,7 +768,7 @@ static void RENAME(extract_even)(const uint8_t *src, uint8_t *dst, x86_reg count
     }
 }
 
-static void RENAME(extract_even2)(const uint8_t *src, uint8_t *dst0, uint8_t *dst1, x86_reg count)
+static void extract_even2_c(const uint8_t *src, uint8_t *dst0, uint8_t *dst1, x86_reg count)
 {
     dst0+=   count;
     dst1+=   count;
@@ -781,7 +781,7 @@ static void RENAME(extract_even2)(const uint8_t *src, uint8_t *dst0, uint8_t *ds
     }
 }
 
-static void RENAME(extract_even2avg)(const uint8_t *src0, const uint8_t *src1, uint8_t *dst0, uint8_t *dst1, x86_reg count)
+static void extract_even2avg_c(const uint8_t *src0, const uint8_t *src1, uint8_t *dst0, uint8_t *dst1, x86_reg count)
 {
     dst0 +=   count;
     dst1 +=   count;
@@ -795,7 +795,7 @@ static void RENAME(extract_even2avg)(const uint8_t *src0, const uint8_t *src1, u
     }
 }
 
-static void RENAME(extract_odd2)(const uint8_t *src, uint8_t *dst0, uint8_t *dst1, x86_reg count)
+static void extract_odd2_c(const uint8_t *src, uint8_t *dst0, uint8_t *dst1, x86_reg count)
 {
     dst0+=   count;
     dst1+=   count;
@@ -809,7 +809,7 @@ static void RENAME(extract_odd2)(const uint8_t *src, uint8_t *dst0, uint8_t *dst
     }
 }
 
-static void RENAME(extract_odd2avg)(const uint8_t *src0, const uint8_t *src1, uint8_t *dst0, uint8_t *dst1, x86_reg count)
+static void extract_odd2avg_c(const uint8_t *src0, const uint8_t *src1, uint8_t *dst0, uint8_t *dst1, x86_reg count)
 {
     dst0 +=   count;
     dst1 +=   count;
@@ -825,7 +825,7 @@ static void RENAME(extract_odd2avg)(const uint8_t *src0, const uint8_t *src1, ui
     }
 }
 
-static void RENAME(yuyvtoyuv420)(uint8_t *ydst, uint8_t *udst, uint8_t *vdst, const uint8_t *src,
+static void yuyvtoyuv420_c(uint8_t *ydst, uint8_t *udst, uint8_t *vdst, const uint8_t *src,
                                       long width, long height,
                                       long lumStride, long chromStride, long srcStride)
 {
@@ -833,9 +833,9 @@ static void RENAME(yuyvtoyuv420)(uint8_t *ydst, uint8_t *udst, uint8_t *vdst, co
     const long chromWidth= -((-width)>>1);
 
     for (y=0; y<height; y++) {
-        RENAME(extract_even)(src, ydst, width);
+        extract_even_c(src, ydst, width);
         if(y&1) {
-            RENAME(extract_odd2avg)(src-srcStride, src, udst, vdst, chromWidth);
+            extract_odd2avg_c(src-srcStride, src, udst, vdst, chromWidth);
             udst+= chromStride;
             vdst+= chromStride;
         }
@@ -845,7 +845,7 @@ static void RENAME(yuyvtoyuv420)(uint8_t *ydst, uint8_t *udst, uint8_t *vdst, co
     }
 }
 
-static void RENAME(yuyvtoyuv422)(uint8_t *ydst, uint8_t *udst, uint8_t *vdst, const uint8_t *src,
+static void yuyvtoyuv422_c(uint8_t *ydst, uint8_t *udst, uint8_t *vdst, const uint8_t *src,
                                       long width, long height,
                                       long lumStride, long chromStride, long srcStride)
 {
@@ -853,8 +853,8 @@ static void RENAME(yuyvtoyuv422)(uint8_t *ydst, uint8_t *udst, uint8_t *vdst, co
     const long chromWidth= -((-width)>>1);
 
     for (y=0; y<height; y++) {
-        RENAME(extract_even)(src, ydst, width);
-        RENAME(extract_odd2)(src, udst, vdst, chromWidth);
+        extract_even_c(src, ydst, width);
+        extract_odd2_c(src, udst, vdst, chromWidth);
 
         src += srcStride;
         ydst+= lumStride;
@@ -863,7 +863,7 @@ static void RENAME(yuyvtoyuv422)(uint8_t *ydst, uint8_t *udst, uint8_t *vdst, co
     }
 }
 
-static void RENAME(uyvytoyuv420)(uint8_t *ydst, uint8_t *udst, uint8_t *vdst, const uint8_t *src,
+static void uyvytoyuv420_c(uint8_t *ydst, uint8_t *udst, uint8_t *vdst, const uint8_t *src,
                                       long width, long height,
                                       long lumStride, long chromStride, long srcStride)
 {
@@ -871,9 +871,9 @@ static void RENAME(uyvytoyuv420)(uint8_t *ydst, uint8_t *udst, uint8_t *vdst, co
     const long chromWidth= -((-width)>>1);
 
     for (y=0; y<height; y++) {
-        RENAME(extract_even)(src+1, ydst, width);
+        extract_even_c(src+1, ydst, width);
         if(y&1) {
-            RENAME(extract_even2avg)(src-srcStride, src, udst, vdst, chromWidth);
+            extract_even2avg_c(src-srcStride, src, udst, vdst, chromWidth);
             udst+= chromStride;
             vdst+= chromStride;
         }
@@ -883,7 +883,7 @@ static void RENAME(uyvytoyuv420)(uint8_t *ydst, uint8_t *udst, uint8_t *vdst, co
     }
 }
 
-static void RENAME(uyvytoyuv422)(uint8_t *ydst, uint8_t *udst, uint8_t *vdst, const uint8_t *src,
+static void uyvytoyuv422_c(uint8_t *ydst, uint8_t *udst, uint8_t *vdst, const uint8_t *src,
                                       long width, long height,
                                       long lumStride, long chromStride, long srcStride)
 {
@@ -891,8 +891,8 @@ static void RENAME(uyvytoyuv422)(uint8_t *ydst, uint8_t *udst, uint8_t *vdst, co
     const long chromWidth= -((-width)>>1);
 
     for (y=0; y<height; y++) {
-        RENAME(extract_even)(src+1, ydst, width);
-        RENAME(extract_even2)(src, udst, vdst, chromWidth);
+        extract_even_c(src+1, ydst, width);
+        extract_even2_c(src, udst, vdst, chromWidth);
 
         src += srcStride;
         ydst+= lumStride;
@@ -901,39 +901,39 @@ static void RENAME(uyvytoyuv422)(uint8_t *ydst, uint8_t *udst, uint8_t *vdst, co
     }
 }
 
-static inline void RENAME(rgb2rgb_init)(void)
+static inline void rgb2rgb_init_c(void)
 {
-    rgb15to16       = RENAME(rgb15to16);
-    rgb15tobgr24    = RENAME(rgb15tobgr24);
-    rgb15to32       = RENAME(rgb15to32);
-    rgb16tobgr24    = RENAME(rgb16tobgr24);
-    rgb16to32       = RENAME(rgb16to32);
-    rgb16to15       = RENAME(rgb16to15);
-    rgb24tobgr16    = RENAME(rgb24tobgr16);
-    rgb24tobgr15    = RENAME(rgb24tobgr15);
-    rgb24tobgr32    = RENAME(rgb24tobgr32);
-    rgb32to16       = RENAME(rgb32to16);
-    rgb32to15       = RENAME(rgb32to15);
-    rgb32tobgr24    = RENAME(rgb32tobgr24);
-    rgb24to15       = RENAME(rgb24to15);
-    rgb24to16       = RENAME(rgb24to16);
-    rgb24tobgr24    = RENAME(rgb24tobgr24);
-    shuffle_bytes_2103 = RENAME(shuffle_bytes_2103);
-    rgb32tobgr16    = RENAME(rgb32tobgr16);
-    rgb32tobgr15    = RENAME(rgb32tobgr15);
-    yv12toyuy2      = RENAME(yv12toyuy2);
-    yv12touyvy      = RENAME(yv12touyvy);
-    yuv422ptoyuy2   = RENAME(yuv422ptoyuy2);
-    yuv422ptouyvy   = RENAME(yuv422ptouyvy);
-    yuy2toyv12      = RENAME(yuy2toyv12);
-    planar2x        = RENAME(planar2x);
-    rgb24toyv12     = RENAME(rgb24toyv12);
-    interleaveBytes = RENAME(interleaveBytes);
-    vu9_to_vu12     = RENAME(vu9_to_vu12);
-    yvu9_to_yuy2    = RENAME(yvu9_to_yuy2);
+    rgb15to16       = rgb15to16_c;
+    rgb15tobgr24    = rgb15tobgr24_c;
+    rgb15to32       = rgb15to32_c;
+    rgb16tobgr24    = rgb16tobgr24_c;
+    rgb16to32       = rgb16to32_c;
+    rgb16to15       = rgb16to15_c;
+    rgb24tobgr16    = rgb24tobgr16_c;
+    rgb24tobgr15    = rgb24tobgr15_c;
+    rgb24tobgr32    = rgb24tobgr32_c;
+    rgb32to16       = rgb32to16_c;
+    rgb32to15       = rgb32to15_c;
+    rgb32tobgr24    = rgb32tobgr24_c;
+    rgb24to15       = rgb24to15_c;
+    rgb24to16       = rgb24to16_c;
+    rgb24tobgr24    = rgb24tobgr24_c;
+    shuffle_bytes_2103 = shuffle_bytes_2103_c;
+    rgb32tobgr16    = rgb32tobgr16_c;
+    rgb32tobgr15    = rgb32tobgr15_c;
+    yv12toyuy2      = yv12toyuy2_c;
+    yv12touyvy      = yv12touyvy_c;
+    yuv422ptoyuy2   = yuv422ptoyuy2_c;
+    yuv422ptouyvy   = yuv422ptouyvy_c;
+    yuy2toyv12      = yuy2toyv12_c;
+    planar2x        = planar2x_c;
+    rgb24toyv12     = rgb24toyv12_c;
+    interleaveBytes = interleaveBytes_c;
+    vu9_to_vu12     = vu9_to_vu12_c;
+    yvu9_to_yuy2    = yvu9_to_yuy2_c;
 
-    uyvytoyuv420    = RENAME(uyvytoyuv420);
-    uyvytoyuv422    = RENAME(uyvytoyuv422);
-    yuyvtoyuv420    = RENAME(yuyvtoyuv420);
-    yuyvtoyuv422    = RENAME(yuyvtoyuv422);
+    uyvytoyuv420    = uyvytoyuv420_c;
+    uyvytoyuv422    = uyvytoyuv422_c;
+    yuyvtoyuv420    = yuyvtoyuv420_c;
+    yuyvtoyuv422    = yuyvtoyuv422_c;
 }

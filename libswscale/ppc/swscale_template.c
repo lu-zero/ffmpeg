@@ -18,13 +18,24 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+
+#if COMPILE_TEMPLATE_ALTIVEC
+#include "ppc/swscale_altivec_template.c"
+#endif
+
 static inline void RENAME(yuv2yuvX)(SwsContext *c, const int16_t *lumFilter, const int16_t **lumSrc, int lumFilterSize,
                                     const int16_t *chrFilter, const int16_t **chrSrc, int chrFilterSize, const int16_t **alpSrc,
                                     uint8_t *dest, uint8_t *uDest, uint8_t *vDest, uint8_t *aDest, long dstW, long chrDstW)
 {
+#if COMPILE_TEMPLATE_ALTIVEC
+    yuv2yuvX_altivec_real(lumFilter, lumSrc, lumFilterSize,
+                          chrFilter, chrSrc, chrFilterSize,
+                          dest, uDest, vDest, dstW, chrDstW);
+#else //COMPILE_TEMPLATE_ALTIVEC
     yuv2yuvXinC(lumFilter, lumSrc, lumFilterSize,
                 chrFilter, chrSrc, chrFilterSize,
                 alpSrc, dest, uDest, vDest, aDest, dstW, chrDstW);
+#endif //!COMPILE_TEMPLATE_ALTIVEC
 }
 
 static inline void RENAME(yuv2nv12X)(SwsContext *c, const int16_t *lumFilter, const int16_t **lumSrc, int lumFilterSize,
@@ -82,6 +93,18 @@ static inline void RENAME(yuv2packedX)(SwsContext *c, const int16_t *lumFilter, 
                                        const int16_t *chrFilter, const int16_t **chrSrc, int chrFilterSize,
                                        const int16_t **alpSrc, uint8_t *dest, long dstW, long dstY)
 {
+#if COMPILE_TEMPLATE_ALTIVEC
+    /* The following list of supported dstFormat values should
+       match what's found in the body of ff_yuv2packedX_altivec() */
+    if (!(c->flags & SWS_BITEXACT) && !c->alpPixBuf &&
+         (c->dstFormat==PIX_FMT_ABGR  || c->dstFormat==PIX_FMT_BGRA  ||
+          c->dstFormat==PIX_FMT_BGR24 || c->dstFormat==PIX_FMT_RGB24 ||
+          c->dstFormat==PIX_FMT_RGBA  || c->dstFormat==PIX_FMT_ARGB))
+            ff_yuv2packedX_altivec(c, lumFilter, lumSrc, lumFilterSize,
+                                   chrFilter, chrSrc, chrFilterSize,
+                                   dest, dstW, dstY);
+    else
+#endif
         yuv2packedXinC(c, lumFilter, lumSrc, lumFilterSize,
                        chrFilter, chrSrc, chrFilterSize,
                        alpSrc, dest, dstW, dstY);
@@ -204,6 +227,7 @@ static inline void RENAME(nv21ToUV)(uint8_t *dstU, uint8_t *dstV,
     RENAME(nvXXtoUV)(dstV, dstU, src1, width);
 }
 
+
 static inline void RENAME(bgr24ToY)(uint8_t *dst, const uint8_t *src, long width, uint32_t *unused)
 {
     int i;
@@ -289,6 +313,9 @@ static inline void RENAME(rgb24ToUV_half)(uint8_t *dstU, uint8_t *dstV, const ui
 static inline void RENAME(hScale)(int16_t *dst, int dstW, const uint8_t *src, int srcW, int xInc,
                                   const int16_t *filter, const int16_t *filterPos, long filterSize)
 {
+#if COMPILE_TEMPLATE_ALTIVEC
+    hScale_altivec_real(dst, dstW, src, srcW, xInc, filter, filterPos, filterSize);
+#else
     int i;
     for (i=0; i<dstW; i++) {
         int j;
@@ -303,6 +330,7 @@ static inline void RENAME(hScale)(int16_t *dst, int dstW, const uint8_t *src, in
         dst[i] = FFMIN(val>>7, (1<<15)-1); // the cubic equation does overflow ...
         //dst[i] = val>>7;
     }
+#endif /* COMPILE_TEMPLATE_ALTIVEC */
 }
 
 //FIXME all pal and rgb srcFormats could do this convertion as well

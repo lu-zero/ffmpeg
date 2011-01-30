@@ -1255,6 +1255,8 @@ static inline void monoblack2Y(uint8_t *dst, const uint8_t *src, long width, uin
 
 SwsFunc ff_getSwsFunc(SwsContext *c)
 {
+    sws_init_swScale_C(c);
+
 #if CONFIG_RUNTIME_CPUDETECT
     int flags = c->flags;
 
@@ -1270,7 +1272,6 @@ SwsFunc ff_getSwsFunc(SwsContext *c)
         sws_init_swScale_MMX(c);
         return swScale_MMX;
     } else {
-        sws_init_swScale_C(c);
         return swScale_C;
     }
 
@@ -1280,11 +1281,9 @@ SwsFunc ff_getSwsFunc(SwsContext *c)
         sws_init_swScale_altivec(c);
         return swScale_altivec;
     } else {
-        sws_init_swScale_C(c);
         return swScale_C;
     }
 #endif
-    sws_init_swScale_C(c);
     return swScale_C;
 #endif /* ARCH_X86 */
 #else //CONFIG_RUNTIME_CPUDETECT
@@ -1301,7 +1300,6 @@ SwsFunc ff_getSwsFunc(SwsContext *c)
     sws_init_swScale_altivec(c);
     return swScale_altivec;
 #else
-    sws_init_swScale_C(c);
     return swScale_C;
 #endif
 #endif //!CONFIG_RUNTIME_CPUDETECT

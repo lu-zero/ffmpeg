@@ -246,7 +246,8 @@ void av_register_all(void)
     REGISTER_PROTOCOL (RTMP, rtmps);
 #endif
     REGISTER_PROTOCOL (RTP, rtp);
+    REGISTER_PROTOCOL (SCTP, sctp);
     REGISTER_PROTOCOL (TCP, tcp);
     REGISTER_PROTOCOL (UDP, udp);
-    REGISTER_PROTOCOL (SCTP, sctp);
+    REGISTER_PROTOCOL (UNIX, unix);
 }

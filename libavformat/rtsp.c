@@ -846,7 +846,26 @@ void ff_rtsp_skip_packet(AVFormatContext *s)
     }
 }
 
-int ff_rtsp_read_reply(AVFormatContext *s, int return_on_interleaved_data)
+static int ff_rtsp_read_reply_sctp(AVFormatContext *s)
+{
+    RTSPState *rt = s->priv_data;
+    char buf[4096+2];
+    int ret, id = -1;
+    do {
+        ret = url_read(rt->rtsp_hd, buf, sizeof(buf));
+        id = AV_RB16(buf);
+        if ( id == 0 ) {
+            memcpy(rt->last_reply, buf+2, ret-2);
+        } else {
+            // XXX we are dumping possible valid packets in corner cases.
+        }
+    } while (ret > 0 && id != 0);
+
+    return ret;
+}
+
+static int ff_rtsp_read_reply_tcp(AVFormatContext *s,
+                                  int return_on_interleaved_data)
 {
     RTSPState *rt = s->priv_data;
     char buf[4096], *q;
@@ -894,6 +913,16 @@ int ff_rtsp_read_reply(AVFormatContext *s, int return_on_interleaved_data)
     return 0;
 }
 
+int ff_rtsp_read_reply (AVFormatContext *s, int return_on_interleaved_data)
+{
+    RTSPState *rt = s->priv_data;
+    if(rt->control_transport == RTSP_MODE_SCTP) {
+        return ff_rtsp_read_reply_sctp(s);
+    } else {
+        return ff_rtsp_read_reply_tcp(s, return_on_interleaved_data);
+    }
+}
+
 int ff_rtsp_parse_reply(AVFormatContext *s, RTSPMessageHeader *reply,
                         unsigned char **content_ptr, const char *method)
 {
@@ -906,7 +935,7 @@ int ff_rtsp_parse_reply(AVFormatContext *s, RTSPMessageHeader *reply,
 
     while ( (line = strtok_r(line_start, "\n", &line_save)) != NULL ) {
         if ( line == rt->last_reply ) {
-            sscanf(line, "%*s %d %255s ", &reply->status_code, &reply->reason);
+            sscanf(line, "%*s %d %255s ", &reply->status_code, reply->reason);
             line_start = NULL;
         } else {
             ff_rtsp_parse_line(reply, line, rt, method);
@@ -969,41 +998,56 @@ static int ff_rtsp_send_cmd_with_content_async(AVFormatContext *s,
 {
     RTSPState *rt = s->priv_data;
     char buf[4096], *out_buf;
+    int len = sizeof(buf);
     char base64buf[AV_BASE64_SIZE(sizeof(buf))];
 
     /* Add in RTSP headers */
     out_buf = buf;
     rt->seq++;
-    snprintf(buf, sizeof(buf), "%s %s RTSP/1.0\r\n", method, url);
+    if (rt->control_transport == RTSP_MODE_SCTP) {
+        AV_WB16(buf, 0);
+        out_buf+=2;
+        len-=2;
+
+    }
+
+    snprintf(out_buf, len, "%s %s RTSP/1.0\r\n", method, url);
+
     if (headers)
-        av_strlcat(buf, headers, sizeof(buf));
-    av_strlcatf(buf, sizeof(buf), "CSeq: %d\r\n", rt->seq);
+        av_strlcat(out_buf, headers, len);
+    av_strlcatf(out_buf, len, "CSeq: %d\r\n", rt->seq);
     if (rt->session_id[0] != '\0' && (!headers ||
         !strstr(headers, "\nIf-Match:"))) {
-        av_strlcatf(buf, sizeof(buf), "Session: %s\r\n", rt->session_id);
+        av_strlcatf(out_buf, len, "Session: %s\r\n", rt->session_id);
     }
     if (rt->auth[0]) {
         char *str = ff_http_auth_create_response(&rt->auth_state,
                                                  rt->auth, url, method);
         if (str)
-            av_strlcat(buf, str, sizeof(buf));
+            av_strlcat(out_buf, str, len);
         av_free(str);
     }
     if (send_content_length > 0 && send_content)
-        av_strlcatf(buf, sizeof(buf), "Content-Length: %d\r\n", send_content_length);
-    av_strlcat(buf, "\r\n", sizeof(buf));
+        av_strlcatf(out_buf, len, "Content-Length: %d\r\n", send_content_length);
+    av_strlcat(out_buf, "\r\n", len);
 
     /* base64 encode rtsp if tunneling */
     if (rt->control_transport == RTSP_MODE_TUNNEL) {
         av_base64_encode(base64buf, sizeof(base64buf), buf, strlen(buf));
         out_buf = base64buf;
     }
+    len = strlen(out_buf);
 
-    av_dlog(s, "Sending:\n%s--\n", buf);
+    av_log(s, AV_LOG_INFO, "Sending:\n%s--\n", out_buf);
 
-    url_write(rt->rtsp_hd_out, out_buf, strlen(out_buf));
+    if (rt->control_transport == RTSP_MODE_SCTP) {
+        out_buf -= 2;
+        len += 2;
+    }
+
+    url_write(rt->rtsp_hd_out, out_buf, len);
     if (send_content_length > 0 && send_content) {
-        if (rt->control_transport == RTSP_MODE_TUNNEL) {
+        if (rt->control_transport != RTSP_MODE_PLAIN) {
             av_log(s, AV_LOG_ERROR, "tunneling of RTSP requests "
                                     "with content data not supported\n");
             return AVERROR_PATCHWELCOME;
@@ -1380,6 +1424,7 @@ redirect:
                 lower_transport_mask |= (1<< RTSP_LOWER_TRANSPORT_TCP);
             } else if (!strcmp(option, "sctp")) {
                 lower_transport_mask |= (1<< RTSP_LOWER_TRANSPORT_SCTP);
+                rt->control_transport = RTSP_MODE_SCTP;
             } else if(!strcmp(option, "http")) {
                 lower_transport_mask |= (1<< RTSP_LOWER_TRANSPORT_TCP);
                 rt->control_transport = RTSP_MODE_TUNNEL;
@@ -1493,8 +1538,9 @@ redirect:
         }
     } else {
         /* open the underlying connection connection */
-        if (lower_transport_mask & (1<< RTSP_LOWER_TRANSPORT_SCTP))
-            ff_url_join(tcpname, sizeof(tcpname), "sctp", NULL, host, port, NULL);
+        if (rt->control_transport == RTSP_MODE_SCTP)
+            ff_url_join(tcpname, sizeof(tcpname), "sctp",
+                        NULL, host, port, "?max_streams=15");
         else
             ff_url_join(tcpname, sizeof(tcpname), "tcp", NULL, host, port, NULL);
         if (url_open(&rt->rtsp_hd, tcpname, URL_RDWR) < 0) {

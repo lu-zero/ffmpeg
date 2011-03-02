@@ -239,7 +239,7 @@ int ff_rtsp_sctp_read_packet(AVFormatContext *s, RTSPStream **prtsp_st,
     RTSPStream *rtsp_st;
 
 #ifdef DEBUG_RTP_TCP
-    av_dlog(s, "tcp_read_packet:\n");
+    av_dlog(s, "sctp_read_packet:\n");
 #endif
 redo:
     for (;;) {
@@ -250,7 +250,7 @@ redo:
         id = AV_RB16(buf);
         if ( id == 0 ) {
             assert(len < sizeof(rt->last_reply));
-            memcpy(rt->last_reply, buf, len);
+            memcpy(rt->last_reply, buf+2, len);
             if ( (ret = ff_rtsp_parse_reply(s, &reply, NULL, NULL)) < 0 )
                 return ret;
             if (rt->state != RTSP_STATE_STREAMING)

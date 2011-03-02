@@ -51,12 +51,13 @@ enum RTSPTransport {
 };
 
 /**
- * Transport mode for the RTSP data. This may be plain, or
- * tunneled, which is done over HTTP.
+ * Transport mode for the RTSP data. This may be over TCP, plain or
+ * tunneled, which is done over HTTP or over SCTP.
  */
 enum RTSPControlTransport {
     RTSP_MODE_PLAIN,   /**< Normal RTSP */
-    RTSP_MODE_TUNNEL   /**< RTSP over HTTP (tunneling) */
+    RTSP_MODE_TUNNEL,  /**< RTSP over HTTP (tunneling) */
+    RTSP_MODE_SCTP     /**< RTSP over SCTP */
 };
 
 #define RTSP_DEFAULT_PORT   554

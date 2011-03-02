@@ -190,11 +190,12 @@ redo:
     for (;;) {
         RTSPMessageHeader reply;
 
-        ret = ff_rtsp_read_reply(s, &reply, NULL, 1, NULL);
+        ret = ff_rtsp_read_reply(s, 1);
         if (ret < 0)
             return ret;
         if (ret == 1) /* received '$' */
             break;
+        ff_rtsp_parse_reply(s, &reply, NULL, NULL);
         /* XXX: parse message */
         if (rt->state != RTSP_STATE_STREAMING)
             return 0;
@@ -216,6 +217,51 @@ redo:
     if (rt->transport == RTSP_TRANSPORT_RDT &&
         ff_rdt_parse_header(buf, len, &id, NULL, NULL, NULL, NULL) < 0)
         return -1;
+
+    /* find the matching stream */
+    for (i = 0; i < rt->nb_rtsp_streams; i++) {
+        rtsp_st = rt->rtsp_streams[i];
+        if (id >= rtsp_st->interleaved_min &&
+            id <= rtsp_st->interleaved_max)
+            goto found;
+    }
+    goto redo;
+found:
+    *prtsp_st = rtsp_st;
+    return len;
+}
+
+int ff_rtsp_sctp_read_packet(AVFormatContext *s, RTSPStream **prtsp_st,
+                             uint8_t *buf, int buf_size)
+{
+    RTSPState *rt = s->priv_data;
+    int id, len, i, ret;
+    RTSPStream *rtsp_st;
+
+#ifdef DEBUG_RTP_TCP
+    av_dlog(s, "tcp_read_packet:\n");
+#endif
+redo:
+    for (;;) {
+        RTSPMessageHeader reply;
+
+        ret = url_read(rt->rtsp_hd, buf, buf_size);
+        len = ret-2;
+        id = AV_RB16(buf);
+        if ( id == 0 ) {
+            assert(len < sizeof(rt->last_reply));
+            memcpy(rt->last_reply, buf, len);
+            if ( (ret = ff_rtsp_parse_reply(s, &reply, NULL, NULL)) < 0 )
+                return ret;
+            if (rt->state != RTSP_STATE_STREAMING)
+                return 0;
+        }
+    }
+#ifdef DEBUG_RTP_TCP
+    av_dlog(s, "id=%d len=%d\n", id, len);
+#endif
+    if (len < 12)
+        goto redo;
 
     /* find the matching stream */
     for (i = 0; i < rt->nb_rtsp_streams; i++) {

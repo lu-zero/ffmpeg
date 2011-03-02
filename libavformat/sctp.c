@@ -265,7 +265,7 @@ static int sctp_wait_fd(int fd, int write)
     int ret;
 
     ret = poll(&p, 1, 100);
-//    av_log(NULL, AV_LOG_INFO, "Polling %d %s\n", ret, strerror(errno));
+    av_log(NULL, AV_LOG_INFO, "Polling %d %s\n", ret, strerror(errno));
     return ret < 0 ? ff_neterrno() : p.revents & ev ? 0 : AVERROR(EAGAIN);
 }
 
@@ -282,12 +282,14 @@ static int sctp_read(URLContext *h, uint8_t *buf, int size)
     if (s->max_streams) {
         struct sctp_sndrcvinfo info = {0};
         ret = ff_sctp_recvmsg(s->fd, buf+2, size-2, NULL, 0, &info, 0);
-//        av_log(NULL, AV_LOG_INFO, "Stream %d \n", info.sinfo_stream);
+        av_log(NULL, AV_LOG_INFO, "Stream %d\n", info.sinfo_stream);
         AV_WB16(buf, info.sinfo_stream);
+        ret = (ret < 0) ? ret : ret + 2;
+        av_log(NULL, AV_LOG_INFO, "Receiving %d %s\n%s",
+                     ret, strerror(errno),buf+2);
     } else {
         ret = recv(s->fd, buf, size, 0);
     }
-//    av_log(NULL, AV_LOG_INFO, "Receiving %d %s\n", ret, strerror(errno));
     return ret < 0 ? ff_neterrno() : ret;
 }
 
@@ -305,11 +307,15 @@ static int sctp_write(URLContext *h, const uint8_t *buf, int size)
     if (s->max_streams) {
         struct sctp_sndrcvinfo info = {0};
         info.sinfo_stream = AV_RB16(buf);
+        if (info.sinfo_stream > s->max_streams) abort();
+        av_log(NULL, AV_LOG_INFO, "Writing to %d\n%s\n",
+                     info.sinfo_stream, buf+2);
         ret = ff_sctp_send(s->fd, buf+2, size-2, &info, 0);
+        ret = (ret < 0) ? ret : ret + 2; //XXX clean it up
     } else {
         ret = send(s->fd, buf, size, 0);
     }
-//    av_log(NULL, AV_LOG_INFO, "Writing res %d %s\n", ret, strerror(errno));
+    av_log(NULL, AV_LOG_INFO, "Writing res %d %s\n", ret, strerror(errno));
     return ret < 0 ? ff_neterrno() : ret;
 }
 

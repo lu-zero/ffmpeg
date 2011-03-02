@@ -900,13 +900,14 @@ int ff_rtsp_parse_reply(AVFormatContext *s, RTSPMessageHeader *reply,
     RTSPState *rt = s->priv_data;
     int content_length;
     unsigned char *content = NULL;
-    char *line, *line_save = NULL;
+    char *line, *line_save = NULL, *line_start = rt->last_reply;
 
     memset(reply, 0, sizeof(*reply));
 
-    while ( (line = strtok_r(rt->last_reply, "\n", &line_save)) != NULL ) {
+    while ( (line = strtok_r(line_start, "\n", &line_save)) != NULL ) {
         if ( line == rt->last_reply ) {
-            sscanf(line, "%*s %d %255s", &reply->status_code, &reply->reason);
+            sscanf(line, "%*s %d %255s ", &reply->status_code, &reply->reason);
+            line_start = NULL;
         } else {
             ff_rtsp_parse_line(reply, line, rt, method);
         }

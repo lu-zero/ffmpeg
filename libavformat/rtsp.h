@@ -35,6 +35,7 @@ enum RTSPLowerTransport {
     RTSP_LOWER_TRANSPORT_UDP = 0,           /**< UDP/unicast */
     RTSP_LOWER_TRANSPORT_TCP = 1,           /**< TCP; interleaved in RTSP */
     RTSP_LOWER_TRANSPORT_UDP_MULTICAST = 2, /**< UDP/multicast */
+    RTSP_LOWER_TRANSPORT_SCTP = 3,          /**< Stream Control Transfer Protocol */
     RTSP_LOWER_TRANSPORT_NB
 };
 
@@ -423,9 +424,6 @@ int ff_rtsp_send_cmd(AVFormatContext *s, const char *method,
  * connection as well.
  *
  * @param s RTSP (de)muxer context
- * @param reply pointer where the RTSP message header will be stored
- * @param content_ptr pointer where the RTSP message body, if any, will
- *                    be stored (length is in reply)
  * @param return_on_interleaved_data whether the function may return if we
  *                   encounter a data marker ('$'), which precedes data
  *                   packets over interleaved TCP/RTSP connections. If this
@@ -434,15 +432,27 @@ int ff_rtsp_send_cmd(AVFormatContext *s, const char *method,
  *                   data packets (if they are encountered), until a reply
  *                   has been fully parsed. If no more data is available
  *                   without parsing a reply, it will return an error.
- * @param method the RTSP method this is a reply to. This affects how
- *               some response headers are acted upon. May be NULL.
  *
  * @return 1 if a data packets is ready to be received, -1 on error,
  *          and 0 on success.
  */
-int ff_rtsp_read_reply(AVFormatContext *s, RTSPMessageHeader *reply,
-                       unsigned char **content_ptr,
-                       int return_on_interleaved_data, const char *method);
+int ff_rtsp_read_reply(AVFormatContext *s,
+                       int return_on_interleaved_data);
+
+/**
+ * Parse a RTSP message from the server.
+ *
+ * @param s RTSP (de)muxer context
+ * @param reply pointer where the RTSP message header will be stored
+ * @param content_ptr pointer where the RTSP message body, if any, will
+ *                    be stored (length is in reply)
+ * @param method the RTSP method this is a reply to. This affects how
+ *               some response headers are acted upon. May be NULL.
+ *
+ * @return -1 on error, 0 on success.
+ */
+int ff_rtsp_parse_reply(AVFormatContext *s, RTSPMessageHeader *reply,
+                        unsigned char **content_ptr, const char *method);
 
 /**
  * Skip a RTP/TCP interleaved packet.
@@ -497,6 +507,12 @@ int ff_sdp_parse(AVFormatContext *s, const char *content);
  */
 int ff_rtsp_tcp_read_packet(AVFormatContext *s, RTSPStream **prtsp_st,
                             uint8_t *buf, int buf_size);
+
+/**
+ * Receive one RTP packet from an SCTP RTSP stream.
+ */
+int ff_rtsp_sctp_read_packet(AVFormatContext *s, RTSPStream **prtsp_st,
+                             uint8_t *buf, int buf_size);
 
 /**
  * Receive one packet from the RTSPStreams set up in the AVFormatContext

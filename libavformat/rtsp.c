@@ -639,6 +639,8 @@ static void rtsp_parse_transport(RTSPMessageHeader *reply, const char *p)
         }
         if (!strcasecmp(lower_transport, "TCP"))
             th->lower_transport = RTSP_LOWER_TRANSPORT_TCP;
+        else if (!strcasecmp(lower_transport, "SCTP"))
+            th->lower_transport = RTSP_LOWER_TRANSPORT_SCTP;
         else
             th->lower_transport = RTSP_LOWER_TRANSPORT_UDP;
 
@@ -665,7 +667,15 @@ static void rtsp_parse_transport(RTSPMessageHeader *reply, const char *p)
                                      &th->server_port_max, &p);
                 }
             } else if (!strcmp(parameter, "interleaved")) {
-                if (*p == '=') {
+                if (th->lower_transport == RTSP_LOWER_TRANSPORT_TCP &&
+                    *p == '=') {
+                    p++;
+                    rtsp_parse_range(&th->interleaved_min,
+                                     &th->interleaved_max, &p);
+                }
+            } else if (!strcmp(parameter, "streams")) {
+                if (th->lower_transport == RTSP_LOWER_TRANSPORT_SCTP &&
+                    *p == '=') {
                     p++;
                     rtsp_parse_range(&th->interleaved_min,
                                      &th->interleaved_max, &p);
@@ -836,18 +846,13 @@ void ff_rtsp_skip_packet(AVFormatContext *s)
     }
 }
 
-int ff_rtsp_read_reply(AVFormatContext *s, RTSPMessageHeader *reply,
-                       unsigned char **content_ptr,
-                       int return_on_interleaved_data, const char *method)
+int ff_rtsp_read_reply(AVFormatContext *s, int return_on_interleaved_data)
 {
     RTSPState *rt = s->priv_data;
-    char buf[4096], buf1[1024], *q;
+    char buf[4096], *q;
     unsigned char ch;
     const char *p;
-    int ret, content_length, line_count = 0;
-    unsigned char *content = NULL;
-
-    memset(reply, 0, sizeof(*reply));
+    int ret;
 
     /* parse reply (XXX: use buffers) */
     rt->last_reply[0] = '\0';
@@ -881,18 +886,31 @@ int ff_rtsp_read_reply(AVFormatContext *s, RTSPMessageHeader *reply,
         if (buf[0] == '\0')
             break;
         p = buf;
-        if (line_count == 0) {
-            /* get reply code */
-            get_word(buf1, sizeof(buf1), &p);
-            get_word(buf1, sizeof(buf1), &p);
-            reply->status_code = atoi(buf1);
-            av_strlcpy(reply->reason, p, sizeof(reply->reason));
+
+        av_strlcat(rt->last_reply, p,    sizeof(rt->last_reply));
+        av_strlcat(rt->last_reply, "\n", sizeof(rt->last_reply));
+    }
+
+    return 0;
+}
+
+int ff_rtsp_parse_reply(AVFormatContext *s, RTSPMessageHeader *reply,
+                        unsigned char **content_ptr, const char *method)
+{
+    RTSPState *rt = s->priv_data;
+    int content_length;
+    unsigned char *content = NULL;
+    char *line, *line_save = NULL;
+
+    memset(reply, 0, sizeof(*reply));
+
+    while ( (line = strtok_r(rt->last_reply, "\n", &line_save)) != NULL ) {
+        if ( line == rt->last_reply ) {
+            sscanf(line, "%*s %d %255s", &reply->status_code, &reply->reason);
         } else {
-            ff_rtsp_parse_line(reply, p, rt, method);
-            av_strlcat(rt->last_reply, p,    sizeof(rt->last_reply));
-            av_strlcat(rt->last_reply, "\n", sizeof(rt->last_reply));
+            ff_rtsp_parse_line(reply, line, rt, method);
         }
-        line_count++;
+        line[strlen(line)] = '\n';
     }
 
     if (rt->session_id[0] == '\0' && reply->session_id[0] != '\0')
@@ -1029,7 +1047,9 @@ retry:
                                                    send_content_length)))
         return ret;
 
-    if ((ret = ff_rtsp_read_reply(s, reply, content_ptr, 0, method) ) < 0)
+    if ((ret = ff_rtsp_read_reply(s, 0) ) < 0)
+        return ret;
+    if ((ret = ff_rtsp_parse_reply(s, reply, content_ptr, method) ) < 0)
         return ret;
 
     if (reply->status_code == 401 && cur_auth_type == HTTP_AUTH_NONE &&
@@ -1165,6 +1185,16 @@ int ff_rtsp_make_setup_request(AVFormatContext *s, const char *host, int port,
             interleave += 2;
         }
 
+        /* RTP/SCTP */
+        else if (lower_transport == RTSP_LOWER_TRANSPORT_SCTP) {
+            snprintf(transport, sizeof(transport) - 1,
+                     "%s/SCTP;", trans_pref);
+            av_strlcatf(transport, sizeof(transport),
+                        "streams=%d-%d",
+                        interleave, interleave + 1);
+            interleave += 2;
+        }
+
         else if (lower_transport == RTSP_LOWER_TRANSPORT_UDP_MULTICAST) {
             snprintf(transport, sizeof(transport) - 1,
                      "%s/UDP;multicast", trans_pref);
@@ -1218,6 +1248,7 @@ int ff_rtsp_make_setup_request(AVFormatContext *s, const char *host, int port,
 
         switch(reply->transports[0].lower_transport) {
         case RTSP_LOWER_TRANSPORT_TCP:
+        case RTSP_LOWER_TRANSPORT_SCTP:
             rtsp_st->interleaved_min = reply->transports[0].interleaved_min;
             rtsp_st->interleaved_max = reply->transports[0].interleaved_max;
             break;
@@ -1346,6 +1377,8 @@ redirect:
                 lower_transport_mask |= (1<< RTSP_LOWER_TRANSPORT_UDP_MULTICAST);
             } else if (!strcmp(option, "tcp")) {
                 lower_transport_mask |= (1<< RTSP_LOWER_TRANSPORT_TCP);
+            } else if (!strcmp(option, "sctp")) {
+                lower_transport_mask |= (1<< RTSP_LOWER_TRANSPORT_SCTP);
             } else if(!strcmp(option, "http")) {
                 lower_transport_mask |= (1<< RTSP_LOWER_TRANSPORT_TCP);
                 rt->control_transport = RTSP_MODE_TUNNEL;
@@ -1367,9 +1400,10 @@ redirect:
         lower_transport_mask = (1 << RTSP_LOWER_TRANSPORT_NB) - 1;
 
     if (s->oformat) {
-        /* Only UDP or TCP - UDP multicast isn't supported. */
+        /* Only UDP, TCP or SCTP - UDP multicast isn't supported. */
         lower_transport_mask &= (1 << RTSP_LOWER_TRANSPORT_UDP) |
-                                (1 << RTSP_LOWER_TRANSPORT_TCP);
+                                (1 << RTSP_LOWER_TRANSPORT_TCP) |
+                                (1 << RTSP_LOWER_TRANSPORT_SCTP);
         if (!lower_transport_mask || rt->control_transport == RTSP_MODE_TUNNEL) {
             av_log(s, AV_LOG_ERROR, "Unsupported lower transport method, "
                                     "only UDP and TCP are supported for output.\n");
@@ -1457,8 +1491,11 @@ redirect:
             goto fail;
         }
     } else {
-        /* open the tcp connection */
-        ff_url_join(tcpname, sizeof(tcpname), "tcp", NULL, host, port, NULL);
+        /* open the underlying connection connection */
+        if (lower_transport_mask & (1<< RTSP_LOWER_TRANSPORT_SCTP))
+            ff_url_join(tcpname, sizeof(tcpname), "sctp", NULL, host, port, NULL);
+        else
+            ff_url_join(tcpname, sizeof(tcpname), "tcp", NULL, host, port, NULL);
         if (url_open(&rt->rtsp_hd, tcpname, URL_RDWR) < 0) {
             err = AVERROR(EIO);
             goto fail;
@@ -1606,8 +1643,9 @@ static int udp_read_packet(AVFormatContext *s, RTSPStream **prtsp_st,
             if (tcp_fd != -1 && p[0].revents & POLLIN) {
                 RTSPMessageHeader reply;
 
-                ret = ff_rtsp_read_reply(s, &reply, NULL, 0, NULL);
-                if (ret < 0)
+                if ( (ret = ff_rtsp_read_reply(s, 0)) < 0)
+                    return ret;
+                if ( (ret = ff_rtsp_parse_reply(s, &reply, NULL, NULL)) < 0)
                     return ret;
                 /* XXX: parse message */
                 if (rt->state != RTSP_STATE_STREAMING)
@@ -1678,6 +1716,9 @@ int ff_rtsp_fetch_packet(AVFormatContext *s, AVPacket *pkt)
 #if CONFIG_RTSP_DEMUXER
     case RTSP_LOWER_TRANSPORT_TCP:
         len = ff_rtsp_tcp_read_packet(s, &rtsp_st, rt->recvbuf, RECVBUF_SIZE);
+        break;
+    case RTSP_LOWER_TRANSPORT_SCTP:
+        len = ff_rtsp_sctp_read_packet(s, &rtsp_st, rt->recvbuf, RECVBUF_SIZE);
         break;
 #endif
     case RTSP_LOWER_TRANSPORT_UDP:

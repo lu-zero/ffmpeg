@@ -187,11 +187,14 @@ static int rtsp_write_packet(AVFormatContext *s, AVPacket *pkt)
              * since it would block and wait for an RTSP reply on the socket
              * (which may not be coming any time soon) if it handles
              * interleaved packets internally. */
-            ret = ff_rtsp_read_reply(s, &reply, NULL, 1, NULL);
+            ret = ff_rtsp_read_reply(s, 1);
             if (ret < 0)
                 return AVERROR(EPIPE);
             if (ret == 1)
                 ff_rtsp_skip_packet(s);
+            else
+                if ( (ret = ff_rtsp_parse_reply(s, &reply, NULL, NULL)) < 0 )
+                    return AVERROR(EPIPE);
             /* XXX: parse message */
             if (rt->state != RTSP_STATE_STREAMING)
                 return AVERROR(EPIPE);

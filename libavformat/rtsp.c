@@ -902,13 +902,14 @@ static int ff_rtsp_read_reply_tcp(AVFormatContext *s,
 
         av_dlog(s, "line='%s'\n", buf);
 
-        /* test if last line */
-        if (buf[0] == '\r')
-            break;
         p = buf;
 
         av_strlcat(rt->last_reply, p,    sizeof(rt->last_reply));
         av_strlcat(rt->last_reply, "\n", sizeof(rt->last_reply));
+
+        /* test if last line */
+        if (buf[0] == '\r')
+            break;
     }
 
     return 0;
@@ -938,8 +939,9 @@ int ff_rtsp_parse_reply(AVFormatContext *s, RTSPMessageHeader *reply,
     if(!headers_end)
         return AVERROR_INVALIDDATA;
 
-    while ( (line = strtok_r(line_start, "\r\n", &line_save)) != NULL &&
-             line <= headers_end ) {
+    headers_end[2]='\0';
+
+    while ( (line = strtok_r(line_start, "\r\n", &line_save)) != NULL ) {
         if ( line == rt->last_reply ) {
             sscanf(line, "%*s %d %255s ", &reply->status_code, reply->reason);
             line_start = NULL;
@@ -955,12 +957,11 @@ int ff_rtsp_parse_reply(AVFormatContext *s, RTSPMessageHeader *reply,
     content_length = reply->content_length;
     if (content_length > 0) {
         /* leave some room for a trailing '\0' (useful for simple parsing) */
+        content = av_malloc(content_length + 1);
         if(rt->control_transport == RTSP_MODE_SCTP) {
             headers_end+=4;
-            content = strdup(headers_end);
-            content_length = strlen(headers_end);
+            content = memcpy(content, headers_end, content_length); //XXX
         } else {
-            content = av_malloc(content_length + 1);
             (void)url_read_complete(rt->rtsp_hd, content, content_length);
         }
         content[content_length] = '\0';

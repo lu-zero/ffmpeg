@@ -324,9 +324,9 @@ OBJS-$(CONFIG_RTMP_PROTOCOL)             += $(RTMP-OBJS-yes)
 
 OBJS-$(CONFIG_RTP_PROTOCOL)              += rtpproto.o
 OBJS-$(CONFIG_TCP_PROTOCOL)              += tcp.o
-OBJS-$(CONFIG_UDP_PROTOCOL)              += sctp.o
+OBJS-$(CONFIG_SCTP_PROTOCOL)              += sctp.o
 OBJS-$(CONFIG_UDP_PROTOCOL)              += udp.o
-OBJS-$(CONFIG_UDP_PROTOCOL)              += unix.o
+OBJS-$(CONFIG_UNIX_PROTOCOL)              += unix.o
 
 # libavdevice dependencies
 OBJS-$(CONFIG_JACK_INDEV)                += timefilter.o

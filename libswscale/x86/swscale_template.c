@@ -2916,6 +2916,9 @@ static void RENAME(sws_init_swScale)(SwsContext *c)
     {
         c->hyscale_fast = RENAME(hyscale_fast);
         c->hcscale_fast = RENAME(hcscale_fast);
+    } else {
+        c->hyscale_fast = NULL;
+        c->hcscale_fast = NULL;
     }
 
     switch(srcFormat) {

@@ -19,6 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+#define _XOPEN_SOURCE 600
 #include "libavutil/base64.h"
 #include "libavutil/avstring.h"
 #include "libavutil/intreadwrite.h"
@@ -892,7 +893,7 @@ static int ff_rtsp_read_reply_tcp(AVFormatContext *s,
                     return 1;
                 } else
                     ff_rtsp_skip_packet(s);
-            } else if (ch != '\r') {
+            } else {
                 if ((q - buf) < sizeof(buf) - 1)
                     *q++ = ch;
             }
@@ -902,7 +903,7 @@ static int ff_rtsp_read_reply_tcp(AVFormatContext *s,
         av_dlog(s, "line='%s'\n", buf);
 
         /* test if last line */
-        if (buf[0] == '\0')
+        if (buf[0] == '\r')
             break;
         p = buf;
 
@@ -930,17 +931,22 @@ int ff_rtsp_parse_reply(AVFormatContext *s, RTSPMessageHeader *reply,
     int content_length;
     unsigned char *content = NULL;
     char *line, *line_save = NULL, *line_start = rt->last_reply;
-
+    char *headers_end;
     memset(reply, 0, sizeof(*reply));
 
-    while ( (line = strtok_r(line_start, "\n", &line_save)) != NULL ) {
+    headers_end = strstr(rt->last_reply, "\r\n\r\n");
+    if(!headers_end)
+        return AVERROR_INVALIDDATA;
+
+    while ( (line = strtok_r(line_start, "\r\n", &line_save)) != NULL &&
+             line <= headers_end ) {
         if ( line == rt->last_reply ) {
             sscanf(line, "%*s %d %255s ", &reply->status_code, reply->reason);
             line_start = NULL;
         } else {
             ff_rtsp_parse_line(reply, line, rt, method);
         }
-        line[strlen(line)] = '\n';
+//        line[strlen(line)] = '\n';
     }
 
     if (rt->session_id[0] == '\0' && reply->session_id[0] != '\0')
@@ -949,8 +955,14 @@ int ff_rtsp_parse_reply(AVFormatContext *s, RTSPMessageHeader *reply,
     content_length = reply->content_length;
     if (content_length > 0) {
         /* leave some room for a trailing '\0' (useful for simple parsing) */
-        content = av_malloc(content_length + 1);
-        (void)url_read_complete(rt->rtsp_hd, content, content_length);
+        if(rt->control_transport == RTSP_MODE_SCTP) {
+            headers_end+=4;
+            content = strdup(headers_end);
+            content_length = strlen(headers_end);
+        } else {
+            content = av_malloc(content_length + 1);
+            (void)url_read_complete(rt->rtsp_hd, content, content_length);
+        }
         content[content_length] = '\0';
     }
     if (content_ptr)

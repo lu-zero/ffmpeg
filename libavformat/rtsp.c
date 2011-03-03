@@ -1249,7 +1249,7 @@ int ff_rtsp_make_setup_request(AVFormatContext *s, const char *host, int port,
                      "%s/SCTP;", trans_pref);
             av_strlcatf(transport, sizeof(transport),
                         "streams=%d-%d",
-                        interleave, interleave + 1);
+                        interleave + 1 , interleave + 2);
             interleave += 2;
         }
 

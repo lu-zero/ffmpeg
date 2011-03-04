@@ -248,6 +248,7 @@ redo:
         ret = url_read(rt->rtsp_hd, buf, buf_size);
         len = ret-2;
         id = AV_RB16(buf);
+        memmove(buf, buf+2, buf_size-2);
         if ( id == 0 ) {
             assert(len < sizeof(rt->last_reply));
             memcpy(rt->last_reply, buf+2, len);
@@ -255,6 +256,8 @@ redo:
                 return ret;
             if (rt->state != RTSP_STATE_STREAMING)
                 return 0;
+        } else {
+            break;
         }
     }
 #ifdef DEBUG_RTP_TCP

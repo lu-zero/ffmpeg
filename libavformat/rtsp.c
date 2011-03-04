@@ -674,7 +674,7 @@ static void rtsp_parse_transport(RTSPMessageHeader *reply, const char *p)
                     rtsp_parse_range(&th->interleaved_min,
                                      &th->interleaved_max, &p);
                 }
-            } else if (!strcmp(parameter, "streams")) {
+            } else if (!strcmp(parameter, "server_streams")) {
                 if (th->lower_transport == RTSP_LOWER_TRANSPORT_SCTP &&
                     *p == '=') {
                     p++;

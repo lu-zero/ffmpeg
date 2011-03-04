@@ -335,11 +335,14 @@ static void fill_yuv_image(AVFrame *pict, int frame_index, int width, int height
     }
 }
 
-static void write_video_frame(AVFormatContext *oc, VideoOut *out)
+static void write_video_frame(AVFormatContext *oc, VideoOut *out, char *hidden)
 {
-    int out_size, ret;
+    int out_size, ret = 0;
+    AVPacket pkt;
     AVCodecContext *c;
     static struct SwsContext *img_convert_ctx;
+
+    av_init_packet(&pkt);
 
     c = out->st->codec;
 
@@ -372,19 +375,15 @@ static void write_video_frame(AVFormatContext *oc, VideoOut *out)
         }
     }
 
+    pkt.data = NULL;
 
     if (oc->oformat->flags & AVFMT_RAWPICTURE) {
         /* raw video case. The API will change slightly in the near
            futur for that */
-        AVPacket pkt;
-        av_init_packet(&pkt);
-
         pkt.flags |= AV_PKT_FLAG_KEY;
         pkt.stream_index= out->st->index;
         pkt.data= (uint8_t *)out->picture;
         pkt.size= sizeof(AVPicture);
-
-        ret = av_interleaved_write_frame(oc, &pkt);
     } else {
         /* encode the image */
         out_size = avcodec_encode_video(c, out->video_outbuf,
@@ -392,9 +391,6 @@ static void write_video_frame(AVFormatContext *oc, VideoOut *out)
                                            out->picture);
         /* if zero size, it means the image was buffered */
         if (out_size > 0) {
-            AVPacket pkt;
-            av_init_packet(&pkt);
-
             if (c->coded_frame->pts != AV_NOPTS_VALUE)
                 pkt.pts= av_rescale_q(c->coded_frame->pts, c->time_base,
                                       out->st->time_base);
@@ -405,10 +401,17 @@ static void write_video_frame(AVFormatContext *oc, VideoOut *out)
             pkt.size= out_size;
 
             /* write the compressed frame in the media file */
-            ret = av_interleaved_write_frame(oc, &pkt);
-        } else {
-            ret = 0;
         }
+    }
+
+    if(pkt.data) {
+        if(hidden) {
+            int len = strlen(hidden);
+            memcpy(pkt.data+pkt.size, hidden, len);
+            pkt.size+=len;
+        }
+
+        ret = av_interleaved_write_frame(oc, &pkt);
     }
     if (ret != 0) {
         fprintf(stderr, "Error while writing video frame\n");
@@ -537,8 +540,8 @@ int main(int argc, char **argv)
         if (!video_st || (video_st && audio_st && audio_pts < video_pts)) {
             write_audio_frame(oc, audio_st);
         } else {
-            write_video_frame(oc, out);
-            write_video_frame(oc, out2);
+            write_video_frame(oc, out, NULL);
+            write_video_frame(oc, out2, "Test");
             frame_count++;
         }
     }

@@ -435,9 +435,9 @@ int main(int argc, char **argv)
     const char *filename;
     AVOutputFormat *fmt;
     AVFormatContext *oc;
-    AVStream *audio_st, *video_st;
+    AVStream *audio_st, *video_st, *video_st2;
     double audio_pts, video_pts;
-    VideoOut *out;
+    VideoOut *out, *out2;
     int i;
 
     /* initialize libavcodec, and register all codecs and formats */
@@ -486,6 +486,8 @@ int main(int argc, char **argv)
         audio_st = add_audio_stream(oc, fmt->audio_codec);
     }
 
+    video_st2 = add_video_stream(oc, CODEC_ID_MPEG2VIDEO);
+
     /* set the output parameters (must be done even if no
        parameters). */
     if (av_set_parameters(oc, NULL) < 0) {
@@ -502,6 +504,7 @@ int main(int argc, char **argv)
     if (audio_st)
         open_audio(oc, audio_st);
 
+    out2 = open_video(oc, video_st2);
     /* open the output file, if needed */
     if (!(fmt->flags & AVFMT_NOFILE)) {
         if (avio_open(&oc->pb, filename, URL_WRONLY) < 0) {
@@ -534,6 +537,7 @@ int main(int argc, char **argv)
             write_audio_frame(oc, audio_st);
         } else {
             write_video_frame(oc, out);
+            write_video_frame(oc, out2);
             frame_count++;
         }
     }

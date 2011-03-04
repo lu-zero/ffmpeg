@@ -191,7 +191,8 @@ typedef struct {
 } VideoOut;
 
 /* add a video output stream */
-static AVStream *add_video_stream(AVFormatContext *oc, enum CodecID codec_id)
+static AVStream *add_video_stream(AVFormatContext *oc,
+                                  enum CodecID codec_id, float scale)
 {
     AVCodecContext *c;
     AVStream *st;
@@ -209,8 +210,8 @@ static AVStream *add_video_stream(AVFormatContext *oc, enum CodecID codec_id)
     /* put sample parameters */
     c->bit_rate = 400000;
     /* resolution must be a multiple of two */
-    c->width = 352;
-    c->height = 288;
+    c->width = 352*scale;
+    c->height = 288*scale;
     /* time base: this is the fundamental unit of time (in seconds) in terms
        of which frame timestamps are represented. for fixed-fps content,
        timebase should be 1/framerate and timestamp increments should be
@@ -480,13 +481,13 @@ int main(int argc, char **argv)
     video_st = NULL;
     audio_st = NULL;
     if (fmt->video_codec != CODEC_ID_NONE) {
-        video_st = add_video_stream(oc, fmt->video_codec);
+        video_st = add_video_stream(oc, fmt->video_codec, 1);
     }
     if (fmt->audio_codec != CODEC_ID_NONE) {
         audio_st = add_audio_stream(oc, fmt->audio_codec);
     }
 
-    video_st2 = add_video_stream(oc, CODEC_ID_MPEG2VIDEO);
+    video_st2 = add_video_stream(oc, CODEC_ID_MPEG2VIDEO, 0.5);
 
     /* set the output parameters (must be done even if no
        parameters). */

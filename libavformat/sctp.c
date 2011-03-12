@@ -310,7 +310,7 @@ static int sctp_write(URLContext *h, const uint8_t *buf, int size)
         if (info.sinfo_stream > s->max_streams) abort();
 //        av_log(NULL, AV_LOG_INFO, "Writing to %d\n",
 //                     info.sinfo_stream);
-        ret = ff_sctp_send(s->fd, buf+2, size-2, &info, 0);
+        ret = ff_sctp_send(s->fd, buf+2, size-2, &info, MSG_EOR);
         ret = (ret < 0) ? ret : ret + 2; //XXX clean it up
     } else {
         ret = send(s->fd, buf, size, 0);

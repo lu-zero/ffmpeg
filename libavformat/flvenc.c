@@ -183,25 +183,26 @@ static int flv_write_header(AVFormatContext *s)
         AVCodecContext *enc = s->streams[i]->codec;
         switch(enc->codec_type) {
             case AVMEDIA_TYPE_VIDEO:
-            if (s->streams[i]->r_frame_rate.den && s->streams[i]->r_frame_rate.num) {
-                framerate = av_q2d(s->streams[i]->r_frame_rate);
-            } else {
-                framerate = 1/av_q2d(s->streams[i]->codec->time_base);
-            }
-            video_enc = enc;
-            if(enc->codec_tag == 0) {
-                av_log(enc, AV_LOG_ERROR, "video codec not compatible with flv\n");
-                return -1;
-            }
+                if (s->streams[i]->r_frame_rate.den &&
+                    s->streams[i]->r_frame_rate.num) {
+                    framerate = av_q2d(s->streams[i]->r_frame_rate);
+                } else {
+                    framerate = 1/av_q2d(s->streams[i]->codec->time_base);
+                }
+                video_enc = enc;
+                if(enc->codec_tag == 0) {
+                    av_log(enc, AV_LOG_ERROR,
+                                "video codec not compatible with flv\n");
+                    return -1;
+                }
             break;
             case AVMEDIA_TYPE_AUDIO:
-            audio_enc = enc;
-            if(get_audio_flags(enc)<0)
-                return -1;
+                audio_enc = enc;
+                if (get_audio_flags(enc)<0) return -1;
             break;
             default:
-            av_log(enc, AV_LOG_ERROR, "codec not compatible with flv\n");
-            return -1;
+                av_log(enc, AV_LOG_ERROR, "codec not compatible with flv\n");
+                return -1;
         }
         av_set_pts_info(s->streams[i], 32, 1, 1000); /* 32 bit pts in ms */
     }
@@ -383,23 +384,25 @@ static int flv_write_packet(AVFormatContext *s, AVPacket *pkt)
 
     switch (enc->codec_type) {
         case AVMEDIA_TYPE_VIDEO:
-        avio_w8(pb, FLV_TAG_TYPE_VIDEO);
+            avio_w8(pb, FLV_TAG_TYPE_VIDEO);
 
-        flags = enc->codec_tag;
-        if(flags == 0) {
-            av_log(enc, AV_LOG_ERROR, "video codec %X not compatible with flv\n",enc->codec_id);
-            return -1;
-        }
+            flags = enc->codec_tag;
+            if(flags == 0) {
+                av_log(enc, AV_LOG_ERROR,
+                            "video codec %X not compatible with flv\n",
+                            enc->codec_id);
+                return -1;
+            }
 
-        flags |= pkt->flags & AV_PKT_FLAG_KEY ? FLV_FRAME_KEY : FLV_FRAME_INTER;
+            flags |= pkt->flags & AV_PKT_FLAG_KEY ? FLV_FRAME_KEY : FLV_FRAME_INTER;
         break;
         case AVMEDIA_TYPE_AUDIO:
-        assert(enc->codec_type == AVMEDIA_TYPE_AUDIO);
-        flags = get_audio_flags(enc);
+            assert(enc->codec_type == AVMEDIA_TYPE_AUDIO);
+            flags = get_audio_flags(enc);
 
-        assert(size);
+            assert(size);
 
-        avio_w8(pb, FLV_TAG_TYPE_AUDIO);
+            avio_w8(pb, FLV_TAG_TYPE_AUDIO);
         break;
     }
 

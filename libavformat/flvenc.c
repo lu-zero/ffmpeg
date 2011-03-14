@@ -181,7 +181,8 @@ static int flv_write_header(AVFormatContext *s)
 
     for(i=0; i<s->nb_streams; i++){
         AVCodecContext *enc = s->streams[i]->codec;
-        if (enc->codec_type == AVMEDIA_TYPE_VIDEO) {
+        switch(enc->codec_type) {
+            case AVMEDIA_TYPE_VIDEO:
             if (s->streams[i]->r_frame_rate.den && s->streams[i]->r_frame_rate.num) {
                 framerate = av_q2d(s->streams[i]->r_frame_rate);
             } else {
@@ -192,10 +193,15 @@ static int flv_write_header(AVFormatContext *s)
                 av_log(enc, AV_LOG_ERROR, "video codec not compatible with flv\n");
                 return -1;
             }
-        } else {
+            break;
+            case AVMEDIA_TYPE_AUDIO:
             audio_enc = enc;
             if(get_audio_flags(enc)<0)
                 return -1;
+            break;
+            default:
+            av_log(enc, AV_LOG_ERROR, "codec not compatible with flv\n");
+            return -1;
         }
         av_set_pts_info(s->streams[i], 32, 1, 1000); /* 32 bit pts in ms */
     }
@@ -375,7 +381,8 @@ static int flv_write_packet(AVFormatContext *s, AVPacket *pkt)
     else
         flags_size= 1;
 
-    if (enc->codec_type == AVMEDIA_TYPE_VIDEO) {
+    switch (enc->codec_type) {
+        case AVMEDIA_TYPE_VIDEO:
         avio_w8(pb, FLV_TAG_TYPE_VIDEO);
 
         flags = enc->codec_tag;
@@ -385,13 +392,15 @@ static int flv_write_packet(AVFormatContext *s, AVPacket *pkt)
         }
 
         flags |= pkt->flags & AV_PKT_FLAG_KEY ? FLV_FRAME_KEY : FLV_FRAME_INTER;
-    } else {
+        break;
+        case AVMEDIA_TYPE_AUDIO:
         assert(enc->codec_type == AVMEDIA_TYPE_AUDIO);
         flags = get_audio_flags(enc);
 
         assert(size);
 
         avio_w8(pb, FLV_TAG_TYPE_AUDIO);
+        break;
     }
 
     if (enc->codec_id == CODEC_ID_H264) {

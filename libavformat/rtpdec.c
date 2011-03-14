@@ -499,6 +499,8 @@ static int rtp_parse_packet_internal(RTPDemuxContext *s, AVPacket *pkt,
     s->seq = seq;
     len -= 12;
     buf += 12;
+    pkt->seq = s->seq;
+    av_log(NULL, AV_LOG_INFO, "st %d seq %d\n", st? st->index: 1, s->seq);
 
     /* RFC 3550 Section 5.3.1 RTP Header Extension handling */
     if (ext) {

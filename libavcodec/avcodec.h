@@ -1098,6 +1098,7 @@ typedef struct AVPacket {
     int   duration;
     void  (*destruct)(struct AVPacket *);
     void  *priv;
+    int   seq;
     int64_t pos;                            ///< byte position in stream, -1 if unknown
 
     /**

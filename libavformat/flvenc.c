@@ -173,7 +173,7 @@ static int flv_write_header(AVFormatContext *s)
 {
     AVIOContext *pb = s->pb;
     FLVContext *flv = s->priv_data;
-    AVCodecContext *audio_enc = NULL, *video_enc = NULL;
+    AVCodecContext *audio_enc = NULL, *video_enc = NULL, *data_enc = NULL;
     int i;
     double framerate = 0.0;
     int metadata_size_pos, data_size;
@@ -199,6 +199,14 @@ static int flv_write_header(AVFormatContext *s)
             case AVMEDIA_TYPE_AUDIO:
                 audio_enc = enc;
                 if (get_audio_flags(enc)<0) return -1;
+            break;
+            case AVMEDIA_TYPE_DATA:
+                if (enc->codec_id != CODEC_ID_TEXT) {
+                    av_log(enc, AV_LOG_ERROR,
+                                "codec not compatible with flv\n");
+                    return -1;
+                }
+                data_enc = enc;
             break;
             default:
                 av_log(enc, AV_LOG_ERROR, "codec not compatible with flv\n");
@@ -241,7 +249,7 @@ static int flv_write_header(AVFormatContext *s)
 
     /* mixed array (hash) with size and string/type/data tuples */
     avio_w8(pb, AMF_DATA_TYPE_MIXEDARRAY);
-    avio_wb32(pb, 5*!!video_enc + 5*!!audio_enc + 2); // +2 for duration and file size
+    avio_wb32(pb, 5*!!video_enc + 5*!!audio_enc + 2 + 1*!!data_enc); // +2 for duration and file size
 
     put_amf_string(pb, "duration");
     flv->duration_offset= avio_tell(pb);
@@ -285,6 +293,11 @@ static int flv_write_header(AVFormatContext *s)
         put_amf_string(pb, tag->key);
         avio_w8(pb, AMF_DATA_TYPE_STRING);
         put_amf_string(pb, tag->value);
+    }
+
+    if (data_enc) {
+        put_amf_string(pb, "data-stream");
+        put_amf_double(pb, data_enc->codec_id);
     }
 
     put_amf_string(pb, "filesize");
@@ -404,6 +417,9 @@ static int flv_write_packet(AVFormatContext *s, AVPacket *pkt)
 
             avio_w8(pb, FLV_TAG_TYPE_AUDIO);
         break;
+        case AVMEDIA_TYPE_DATA:
+            avio_w8(pb, FLV_TAG_TYPE_META);
+        break;
     }
 
     if (enc->codec_id == CODEC_ID_H264) {
@@ -425,6 +441,28 @@ static int flv_write_packet(AVFormatContext *s, AVPacket *pkt)
     avio_wb24(pb,ts);
     avio_w8(pb,(ts >> 24) & 0x7F); // timestamps are 32bits _signed_
     avio_wb24(pb,flv->reserved);
+
+    if (enc->codec_type == AVMEDIA_TYPE_DATA) {
+        int data_size;
+        int metadata_size_pos = avio_tell(pb);
+        avio_w8(pb, AMF_DATA_TYPE_STRING);
+        put_amf_string(pb, "data-stream");
+        avio_w8(pb, AMF_DATA_TYPE_MIXEDARRAY);
+        avio_wb32(pb, 2);
+        put_amf_string(pb, "codecid");
+        put_amf_double(pb, enc->codec_id);
+        put_amf_string(pb, "data");
+        avio_w8(pb, AMF_DATA_TYPE_STRING);
+        put_amf_string(pb, pkt->data);
+        put_amf_string(pb, "");
+        avio_w8(pb, AMF_END_OF_OBJECT);
+        /* write total size of tag */
+        data_size = avio_tell(pb) - metadata_size_pos;
+        avio_seek(pb, metadata_size_pos - 10, SEEK_SET);
+        avio_wb24(pb, data_size);
+        avio_seek(pb, data_size + 10 - 3, SEEK_CUR);
+        avio_wb32(pb, data_size + 11);
+    } else {
     avio_w8(pb,flags);
     if (enc->codec_id == CODEC_ID_VP6)
         avio_w8(pb,0);
@@ -441,6 +479,7 @@ static int flv_write_packet(AVFormatContext *s, AVPacket *pkt)
 
     avio_wb32(pb,size+flags_size+11); // previous tag size
     flv->duration = FFMAX(flv->duration, pkt->pts + flv->delay + pkt->duration);
+    }
 
     avio_flush(pb);
 

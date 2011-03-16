@@ -2894,6 +2894,7 @@ int av_write_header(AVFormatContext *s)
             den = (int64_t)st->time_base.num * st->codec->sample_rate;
             break;
         case AVMEDIA_TYPE_VIDEO:
+        case AVMEDIA_TYPE_DATA:
             den = (int64_t)st->time_base.num * st->codec->time_base.den;
             break;
         default:
@@ -2976,6 +2977,7 @@ static int compute_pkt_fields2(AVFormatContext *s, AVStream *st, AVPacket *pkt){
         }
         break;
     case AVMEDIA_TYPE_VIDEO:
+    case AVMEDIA_TYPE_DATA:
         av_frac_add(&st->pts, (int64_t)st->time_base.den * st->codec->time_base.num);
         break;
     default:

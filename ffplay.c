@@ -2585,9 +2585,12 @@ static int decode_thread(void *arg)
             packet_queue_put(&is->audioq, pkt);
         } else if (pkt->stream_index == is->video_stream && pkt_in_play_range) {
             packet_queue_put(&is->videoq, pkt);
+            av_log(ic, AV_LOG_INFO, "pts %"PRId64" video\n", pkt->pts);
         } else if (pkt->stream_index == is->subtitle_stream && pkt_in_play_range) {
             packet_queue_put(&is->subtitleq, pkt);
         } else {
+            av_log(ic, AV_LOG_INFO, "pts %"PRId64" data %s\n",
+                       pkt->pts, pkt->data);
             av_free_packet(pkt);
         }
     }

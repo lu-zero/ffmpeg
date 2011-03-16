@@ -441,18 +441,38 @@ static AVStream *add_data_stream(AVFormatContext *oc, enum CodecID codec_id)
     return st;
 }
 
+static void open_data(AVFormatContext *oc, AVStream *st)
+{
+    AVCodec *codec;
+    AVCodecContext *c;
+
+    c = st->codec;
+
+    /* find the video encoder */
+    codec = av_malloc(sizeof(AVCodec));
+    memset(codec, 0, sizeof(AVCodec));
+    codec->id = c->codec_id;
+
+    /* open the codec */
+    c->codec = codec;
+}
+
 static void write_data_frame(AVFormatContext *oc, AVStream *st, char *text)
 {
     AVPacket pkt;
     av_init_packet(&pkt);
     pkt.flags |= AV_PKT_FLAG_KEY;
-    pkt.stream_index= st->index;
+    pkt.stream_index = st->index;
     pkt.data = text;
-    pkt.size= strlen(text);
+    pkt.size = strlen(text);
 
     av_interleaved_write_frame(oc, &pkt);
 }
 
+static void close_data(AVFormatContext *oc, AVStream *st)
+{
+    avcodec_close(st->codec);
+}
 
 /**************************************************************/
 /* media file output */
@@ -529,6 +549,8 @@ int main(int argc, char **argv)
         open_video(oc, video_st);
     if (audio_st)
         open_audio(oc, audio_st);
+    if (data_st)
+        open_data(oc, data_st);
 
     /* open the output file, if needed */
     if (!(fmt->flags & AVFMT_NOFILE)) {
@@ -577,6 +599,8 @@ int main(int argc, char **argv)
         close_video(oc, video_st);
     if (audio_st)
         close_audio(oc, audio_st);
+    if (data_st)
+        close_data(oc, data_st);
 
     /* free the streams */
     for(i = 0; i < oc->nb_streams; i++) {

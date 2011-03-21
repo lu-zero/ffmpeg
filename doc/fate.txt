@@ -1,0 +1,45 @@
+Fate Automated Testing Environment
+
+Fate provides a regression testsuite that can be run locally or configured
+to send reports to fate.libav.org.
+In order to run it needs a large amount of data (samples and references) that
+is provided separately from the actual source distribution.
+
+Use the following command to get the fate test samples
+
+# mkdir fate/fate-suite
+# rsync -aL rsync://samples.libav.org:/samples/fate-suite/ fate/fate-suite
+
+pass `--samples=<path to the samples>` to configure or pass the path with the
+SAMPLES variable to make.
+
+For information on how to set a reporting fate please refer to the following
+wiki page:
+http://wiki.multimedia.cx/index.php?title=FATE
+
+Fate Makefile targets:
+
+fate-list
+    Will list all fate/regression test targets.
+
+fate
+    Run the fate test suite, note you must have installed it.
+
+Fate Makefile variables:
+
+V
+    Verbosity level, can be set to 0, 1 or 2.
+    * Level 0 will show just the test arguments
+    * Level 1 will show just the command used in the test
+    * Level 2 will show everything
+
+SAMPLES
+    Specify or override the path to the fate samples at make time, it has a
+    meaning only while running the regression tests.
+
+THREADS
+    Specify how many threads to use while running regression tests, it is
+    quite useful to detect thread-related regression.
+
+Example:
+    make V=1 SAMPLES=/var/fate/samples THREADS=2 fate

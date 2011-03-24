@@ -446,12 +446,12 @@ static int flv_write_packet(AVFormatContext *s, AVPacket *pkt)
         int data_size;
         int metadata_size_pos = avio_tell(pb);
         avio_w8(pb, AMF_DATA_TYPE_STRING);
-        put_amf_string(pb, "data-stream");
+        put_amf_string(pb, "onMetaData");
         avio_w8(pb, AMF_DATA_TYPE_MIXEDARRAY);
         avio_wb32(pb, 2);
         put_amf_string(pb, "codecid");
         put_amf_double(pb, enc->codec_id);
-        put_amf_string(pb, "data");
+        put_amf_string(pb, "data-stream-packet");
         avio_w8(pb, AMF_DATA_TYPE_STRING);
         put_amf_string(pb, pkt->data);
         put_amf_string(pb, "");
